@@ -97,4 +97,30 @@ for (const level of Object.keys(LEVELS)) {
 }
 console.log('AI legal ok', Object.keys(LEVELS).join(' '));
 
+import { answer, explainPosition, suggestMove } from './coach.js';
+
+const coach = new Chess();
+const hint = suggestMove(coach, 'hard');
+if (!hint.hint) throw new Error('coach hint missing');
+const legalHint = coach.allLegal().some((m) => m.from === hint.hint.from && m.to === hint.hint.to);
+if (!legalHint) throw new Error('coach hint illegal');
+if (coach.history.length) throw new Error('suggest leaked a move');
+
+const explained = explainPosition(coach);
+if (!/White to play/.test(explained.text)) throw new Error('explain start ' + explained.text);
+
+const again = answer(coach, 'play again');
+if (again.action !== 'newgame') throw new Error('play again action');
+
+const chal = answer(coach, 'challenge a friend', { shareUrl: 'http://x' });
+if (chal.action !== 'challenge') throw new Error('challenge action');
+
+const asked = answer(coach, 'suggest a move', { difficulty: 'hard' });
+if (!asked.hint) throw new Error('suggest intent');
+
+const square = answer(coach, 'what about e2');
+if (!/e2/.test(square.text)) throw new Error('square ask ' + square.text);
+
+console.log('coach ok');
+
 console.log('ALL TESTS PASSED');

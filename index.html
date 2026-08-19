@@ -80,6 +80,7 @@
           <p>drag to orbit · click to move</p>
         </div>
 
+        <div class="hud-rail">
         <aside class="panel left">
           <div class="turn">
             <span id="turn-dot" class="dot w"></span>
@@ -99,6 +100,35 @@
           <div class="cap-label">Captured by black</div>
           <div id="cap-w" class="caps w"></div>
         </aside>
+
+        <aside class="coach" id="coach">
+          <button type="button" id="coach-toggle" class="coach-toggle" aria-expanded="false" aria-controls="coach-window">
+            <span class="coach-mark" aria-hidden="true">C</span>
+            Coach
+          </button>
+          <div class="coach-window" id="coach-window">
+            <header class="coach-head">
+              <span class="coach-mark" aria-hidden="true">C</span>
+              <div>
+                <strong>Coach</strong>
+                <em>hints · plans · next move</em>
+              </div>
+              <button type="button" id="coach-close" class="coach-x" aria-label="Close coach">×</button>
+            </header>
+            <div class="coach-log" id="coach-log"></div>
+            <div class="coach-actions" id="coach-actions">
+              <button type="button" data-coach="suggest">Suggest a move</button>
+              <button type="button" data-coach="explain">Explain this position</button>
+              <button type="button" data-coach="challenge">Challenge a friend</button>
+              <button type="button" data-coach="again">Play again</button>
+            </div>
+            <form class="coach-form" id="coach-form">
+              <input id="coach-input" type="text" maxlength="160" placeholder="Ask for a hint…" autocomplete="off" />
+              <button type="submit" id="coach-send">Send</button>
+            </form>
+          </div>
+        </aside>
+        </div>
 
         <aside class="panel right">
           <div class="moves-label">Moves</div>

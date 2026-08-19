@@ -573,7 +573,29 @@ html, body {
   backdrop-filter: blur(14px);
 }
 
-.panel.left { left: 20px; }
+.hud-rail {
+  position: absolute;
+  left: 20px;
+  top: 88px;
+  bottom: 52px;
+  width: 228px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.hud-rail > * { pointer-events: auto; }
+
+.panel.left {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: 100%;
+  max-height: none;
+  flex: 0 1 auto;
+  overflow: auto;
+}
 .panel.right { right: 20px; display: flex; flex-direction: column; max-height: calc(100% - 120px); }
 
 .turn {
@@ -673,6 +695,196 @@ button.wide { grid-column: 1 / -1; }
   color: var(--muted);
   letter-spacing: 0.08em;
   pointer-events: none;
+}
+
+.coach {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  width: 100%;
+  z-index: 5;
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.coach.open {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.coach-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 8px 8px;
+  border-radius: 999px;
+  background: var(--panel);
+  backdrop-filter: blur(14px);
+  text-transform: none;
+  letter-spacing: 0;
+  font: 500 13px Inter, Lexend, sans-serif;
+}
+
+.coach-mark {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: linear-gradient(145deg, #f0d7b0 0%, #c9a86a 46%, #6b4126 100%);
+  color: #1a140e;
+  font: 600 12px Lexend, sans-serif;
+}
+
+.coach.open .coach-toggle { display: none; }
+
+.coach-window {
+  display: none;
+  width: 100%;
+  max-height: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+  padding: 10px 10px 8px;
+  background: var(--panel);
+  border: 1px solid var(--stroke);
+  border-radius: 14px;
+  backdrop-filter: blur(14px);
+}
+
+.coach.open .coach-window { display: flex; }
+
+.coach-head {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.coach-head strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.coach-head em {
+  display: block;
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.coach-x {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 16px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.coach-log {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 48px;
+  flex: 1 1 auto;
+  max-height: none;
+  overflow: auto;
+  margin-bottom: 8px;
+}
+
+.coach-msg {
+  max-width: 92%;
+  padding: 8px 10px;
+  border-radius: 11px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #d9d1c4;
+}
+
+.coach-msg.bot {
+  align-self: flex-start;
+  background: rgba(58, 36, 22, 0.55);
+  border: 1px solid rgba(232, 214, 176, 0.1);
+}
+
+.coach-msg.you {
+  align-self: flex-end;
+  background: rgba(12, 10, 8, 0.72);
+  border: 1px solid rgba(201, 168, 106, 0.18);
+  color: var(--gold-bright);
+}
+
+.coach-msg.think {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.coach-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.coach-actions button {
+  padding: 7px 6px;
+  border-radius: 999px;
+  text-transform: none;
+  letter-spacing: 0;
+  font: 500 10px Inter, Lexend, sans-serif;
+  background: rgba(12, 10, 8, 0.72);
+}
+
+.coach-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+}
+
+.coach-form input {
+  width: 100%;
+  border: 1px solid var(--stroke);
+  background: rgba(12, 10, 8, 0.72);
+  color: var(--text);
+  border-radius: 9px;
+  padding: 8px 10px;
+  font: 400 12px Lexend, sans-serif;
+  outline: none;
+}
+
+.coach-form input::placeholder { color: var(--muted); }
+.coach-form input:focus { border-color: var(--gold); }
+
+.coach-form button {
+  text-transform: none;
+  letter-spacing: 0;
+  font: 500 12px Inter, Lexend, sans-serif;
+  padding: 8px 12px;
+}
+
+@media (max-width: 820px) {
+  .coach {
+    left: auto;
+    right: 12px;
+    bottom: 284px;
+  }
+  .coach.open {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+  }
+  .coach.open .coach-window {
+    width: 100%;
+    max-height: 46vh;
+  }
 }
 
 .modal {

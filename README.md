@@ -23,5 +23,6 @@ Open http://localhost:8080
 - Undo / Flip / New game
 - Mode: vs computer / pass and play
 - Difficulty: Easy / Medium / Hard (kept on New game)
+- Coach: hints, explain, suggest, challenge a friend, play again
 
 Rules: legal moves, check / mate / stalemate / draw (50-move, threefold, insufficient material), castling, en passant, promotion.

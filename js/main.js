@@ -4,6 +4,7 @@ import { Chess } from './chess.js';
 import { createBoard, createPiece, squareToWorld, worldToSquare } from './pieces.js';
 import { bindUnlock, play, ready, loaded } from './audio.js';
 import { pickMove, LEVELS, thinkDelay } from './ai.js';
+import { answer, greet, noteEvent } from './coach.js';
 
 const GLYPH = {
   w: { p: '♙', n: '♘', b: '♗', r: '♖', q: '♕', k: '♔' },
@@ -144,6 +145,12 @@ const capMat = new THREE.MeshBasicMaterial({
   depthWrite: false,
   side: THREE.DoubleSide,
 });
+const hintMat = new THREE.MeshBasicMaterial({
+  color: 0xe0c089,
+  transparent: true,
+  opacity: 0.36,
+  depthWrite: false,
+});
 
 const overlays = new THREE.Group();
 scene.add(overlays);
@@ -160,6 +167,8 @@ let pending = null;
 let hover = -1;
 let vsComputer = true;
 let difficulty = 'medium';
+let hintMove = null;
+let lastCoachEvent = '';
 const anims = [];
 
 function spawnPieces() {
@@ -196,6 +205,10 @@ function drawMarkers() {
   if (last) {
     overlayAt(last.from, lastMat);
     overlayAt(last.to, lastMat);
+  }
+  if (hintMove) {
+    overlayAt(hintMove.from, hintMat);
+    overlayAt(hintMove.to, hintMat);
   }
   if (game.inCheck()) overlayAt(game.kingSquare(), checkMat);
   if (selected >= 0) overlayAt(selected, selectMat);
@@ -309,6 +322,7 @@ function setHud() {
   } else {
     document.getElementById('end').classList.remove('show');
   }
+  maybeCoachEvent();
 }
 
 function clearSelect() {
@@ -321,6 +335,7 @@ async function applyMove(from, to, promo = null) {
   const res = game.play(from, to, promo);
   if (!res.ok) return res;
   busy = true;
+  hintMove = null;
   clearSelect();
 
   const mover = pieceAt(from);
@@ -433,6 +448,84 @@ function syncSettingsUi() {
   document.getElementById('diff-wrap')?.classList.toggle('is-off', !vsComputer);
 }
 
+const coachEl = document.getElementById('coach');
+const coachLog = document.getElementById('coach-log');
+const coachInput = document.getElementById('coach-input');
+const coachToggle = document.getElementById('coach-toggle');
+const PROMPTS = {
+  suggest: 'Suggest a move',
+  explain: 'Explain this position',
+  challenge: 'Challenge a friend',
+  again: 'Play again',
+};
+
+function coachCtx() {
+  return {
+    vsComputer,
+    difficulty,
+    shareUrl: typeof location !== 'undefined' ? location.href : '',
+  };
+}
+
+function pushCoachMsg(who, text) {
+  if (!coachLog || !text) return;
+  const el = document.createElement('div');
+  el.className = `coach-msg ${who}`;
+  el.textContent = text;
+  coachLog.appendChild(el);
+  coachLog.scrollTop = coachLog.scrollHeight;
+  return el;
+}
+
+function setCoachOpen(on) {
+  if (!coachEl) return;
+  coachEl.classList.toggle('open', on);
+  coachToggle?.setAttribute('aria-expanded', on ? 'true' : 'false');
+  if (on && coachLog && !coachLog.childElementCount) {
+    pushCoachMsg('bot', greet().text);
+  }
+  if (on) coachInput?.focus();
+}
+
+function maybeCoachEvent() {
+  if (!coachEl?.classList.contains('open')) return;
+  const st = game.status();
+  if (st === 'playing' || st === lastCoachEvent) return;
+  lastCoachEvent = st;
+  const note = noteEvent(game);
+  if (note) pushCoachMsg('bot', note.text);
+}
+
+async function runCoach(raw, { echo = true } = {}) {
+  const text = String(raw || '').trim();
+  if (!text) return null;
+  setCoachOpen(true);
+  if (echo) pushCoachMsg('you', text);
+  const think = pushCoachMsg('bot think', 'Looking…');
+  await new Promise((r) => window.setTimeout(r, 220));
+  const res = answer(game, text, coachCtx());
+  think?.remove();
+  pushCoachMsg('bot', res.text);
+  if (res.hint) {
+    hintMove = res.hint;
+    drawMarkers();
+  }
+  if (res.action === 'newgame') {
+    play('newgame');
+    newGame();
+  }
+  if (res.action === 'challenge') {
+    play('click');
+    setMode(false);
+    try {
+      await navigator.clipboard.writeText(location.href);
+    } catch {
+      /* ignore */
+    }
+  }
+  return res;
+}
+
 function startMatch(fresh = false) {
   if (fresh) newGame();
   else setHud();
@@ -450,6 +543,8 @@ function newGame() {
   legal = [];
   pending = null;
   busy = false;
+  hintMove = null;
+  lastCoachEvent = '';
   document.getElementById('promo').classList.remove('show');
   spawnPieces();
   setHud();
@@ -460,6 +555,7 @@ function undoMove() {
   game.undo();
   if (vsComputer && game.history.length && game.turn === 'b') game.undo();
   pending = null;
+  hintMove = null;
   document.getElementById('promo').classList.remove('show');
   spawnPieces();
   clearSelect();
@@ -553,7 +649,12 @@ canvas.addEventListener('click', (ev) => {
   onClick(ev);
 });
 window.addEventListener('keydown', (e) => {
+  if (e.target.closest('input, textarea')) return;
   if (e.key === 'Escape') {
+    if (coachEl?.classList.contains('open')) {
+      setCoachOpen(false);
+      return;
+    }
     clearSelect();
     pending = null;
     document.getElementById('promo').classList.remove('show');
@@ -613,12 +714,35 @@ document.querySelectorAll('.js-play').forEach((el) => {
     startMatch(el.dataset.fresh === '1');
   });
 });
+coachToggle?.addEventListener('click', () => {
+  play('click');
+  setCoachOpen(true);
+});
+document.getElementById('coach-close')?.addEventListener('click', () => {
+  play('click');
+  setCoachOpen(false);
+});
+document.getElementById('coach-actions')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-coach]');
+  if (!btn) return;
+  play('click');
+  runCoach(PROMPTS[btn.dataset.coach] || btn.textContent);
+});
+document.getElementById('coach-form')?.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const text = coachInput?.value || '';
+  if (coachInput) coachInput.value = '';
+  if (!text.trim()) return;
+  play('click');
+  runCoach(text);
+});
 document.getElementById('promo').addEventListener('click', async (e) => {
   const btn = e.target.closest('[data-promo]');
   if (!btn || !pending) return;
   play('click');
   const { from, to } = pending;
   pending = null;
+  hintMove = null;
   document.getElementById('promo').classList.remove('show');
   await applyMove(from, to, btn.dataset.promo);
 });
@@ -672,6 +796,8 @@ window.__chessDebug = {
       legal: legal.map((m) => m.to),
       vsComputer,
       difficulty,
+      coachOpen: !!coachEl?.classList.contains('open'),
+      hint: hintMove ? { from: hintMove.from, to: hintMove.to, san: hintMove.san } : null,
     };
   },
   play,
@@ -703,6 +829,13 @@ window.__chessDebug = {
   startMatch(fresh = false) {
     startMatch(!!fresh);
     return this.state();
+  },
+  askCoach(text) {
+    return runCoach(text);
+  },
+  openCoach(on = true) {
+    setCoachOpen(!!on);
+    return { open: coachEl?.classList.contains('open') };
   },
   async assemble() {
     for (const p of pieces) scene.remove(p.mesh);
