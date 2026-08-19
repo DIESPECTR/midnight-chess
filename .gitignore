@@ -1,0 +1,15 @@
+.temp/
+temp/
+videos/
+audio/
+images/
+skills/
+ui_views/
+meta/
+.railway/
+node_modules/
+.env
+.env.*
+*.mov
+*.mp4
+.DS_Store

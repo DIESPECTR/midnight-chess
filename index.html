@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Midnight Chess — Play 3D chess in the browser</title>
+  <meta name="description" content="A cinematic 3D chess game you can play against the computer. Built in one Quadcode AI workspace." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@500&family=Lexend:wght@300;400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="page-glow"></div>
+  <div class="page-glow-mid"></div>
+
+  <header class="site-nav">
+    <a class="logo" href="#top">
+      <span class="logo-mark" aria-hidden="true">M</span>
+      midnight chess
+    </a>
+    <nav>
+      <a href="#play">Play</a>
+      <a href="#about">About</a>
+      <a class="nav-pink" href="#play">Play now</a>
+      <button id="btn-mode" type="button">Vs computer <span class="arrow-circle" aria-hidden="true">↗</span></button>
+    </nav>
+  </header>
+
+  <section class="hero" id="top">
+    <article class="prompt-card pc-1">
+      <p>Add a computer opponent. I play white. The computer plays black.</p>
+      <span class="who">Cody</span>
+    </article>
+    <article class="prompt-card pc-2">
+      <p>Wrap the 3D chess game in a landing page anyone can open.</p>
+      <span class="who">Lumi</span>
+    </article>
+    <article class="prompt-card pc-3">
+      <p>Deploy this so anyone can open a live link and play.</p>
+      <span class="who">Sonic</span>
+    </article>
+
+    <p class="beta">New <em>[ LIVE ]</em> play against the computer</p>
+    <h1>
+      <span class="line">Play the game.</span>
+      <span class="italic">not both sides.</span>
+      <span class="line">ship the page.</span>
+    </h1>
+    <p class="lede">Explore ideas like a creator, ship results like an engineer.<br />Same 3D chess — now with an opponent and a page you can share.</p>
+    <div class="hero-actions">
+      <a class="cta ghost" href="#play">Play now</a>
+      <a class="cta solid" href="#play">Start a match <span class="arrow-circle" aria-hidden="true">↗</span></a>
+    </div>
+  </section>
+
+  <section class="stage" id="play">
+    <div id="app">
+      <canvas id="scene"></canvas>
+      <div class="hud">
+        <div class="brand">
+          <h1>CHESS</h1>
+          <p>drag to orbit · click to move</p>
+        </div>
+
+        <aside class="panel left">
+          <div class="turn">
+            <span id="turn-dot" class="dot w"></span>
+            <strong id="turn-label">White to move</strong>
+          </div>
+          <div id="status"></div>
+          <div class="cap-label">Captured by white</div>
+          <div id="cap-b" class="caps b"></div>
+          <div class="cap-label">Captured by black</div>
+          <div id="cap-w" class="caps w"></div>
+        </aside>
+
+        <aside class="panel right">
+          <div class="moves-label">Moves</div>
+          <div id="moves"></div>
+          <div class="btns">
+            <button id="btn-undo">Undo</button>
+            <button id="btn-flip">Flip</button>
+            <button id="btn-new" class="wide">New game</button>
+          </div>
+        </aside>
+
+        <div class="hint" id="hint">Select a white piece</div>
+      </div>
+
+      <div id="promo" class="modal">
+        <div class="card">
+          <h2>Promote</h2>
+          <p>Choose a piece</p>
+          <div class="promo-row">
+            <button data-promo="q">♕</button>
+            <button data-promo="r">♖</button>
+            <button data-promo="b">♗</button>
+            <button data-promo="n">♘</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="end" class="modal">
+        <div class="card">
+          <h2 id="end-title">Checkmate</h2>
+          <p id="end-copy"></p>
+          <button id="btn-end-new" class="wide">New game</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="about" id="about">
+    <p class="kicker">One workspace</p>
+    <h2>
+      <span class="qc">QC</span> turns a prototype into
+      <em>a live page</em> —
+      same 3D chess, now with an
+      <strong>opponent</strong>
+      and a link you can send.
+    </h2>
+    <p class="about-lede">You play white. The computer plays black. The board sits in a real product page.</p>
+    <div class="features">
+      <article>
+        <span>01</span>
+        <h3>Landing</h3>
+        <p>The board sits in a real page — headline, pitch, play.</p>
+      </article>
+      <article class="featured">
+        <span>02</span>
+        <h3>Opponent</h3>
+        <p>You play white. The computer plays black.</p>
+      </article>
+      <article>
+        <span>03</span>
+        <h3>Deploy</h3>
+        <p>A live link anyone can open. That’s the product.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="cta-band">
+    <h2>Start <em>creating.</em></h2>
+    <p>Grab the same workflow and spin up whatever you imagine.</p>
+    <a class="cta solid" href="#play">Get started <span class="arrow-circle" aria-hidden="true">↗</span></a>
+  </section>
+
+  <footer class="site-foot">
+    <span>midnight chess</span>
+    <span>Made with Quadcode AI</span>
+  </footer>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
