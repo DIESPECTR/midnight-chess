@@ -20,9 +20,9 @@
       midnight chess
     </a>
     <nav>
-      <a href="#play">Play</a>
+      <a href="#play" class="js-play">Play</a>
       <a href="#about">About</a>
-      <a class="nav-pink" href="#play">Play now</a>
+      <a class="nav-pink js-play" href="#play">Play now</a>
       <button id="btn-mode" type="button">Vs computer <span class="arrow-circle" aria-hidden="true">↗</span></button>
     </nav>
   </header>
@@ -41,7 +41,7 @@
       <span class="who">Sonic</span>
     </article>
 
-    <p class="beta">New <em>[ LIVE ]</em> play against the computer</p>
+    <p class="beta">New <em>[ LIVE ]</em> three levels · play the computer</p>
     <h1>
       <span class="line">Play the game.</span>
       <span class="italic">not both sides.</span>
@@ -49,8 +49,25 @@
     </h1>
     <p class="lede">Explore ideas like a creator, ship results like an engineer.<br />Same 3D chess — now with an opponent and a page you can share.</p>
     <div class="hero-actions">
-      <a class="cta ghost" href="#play">Play now</a>
-      <a class="cta solid" href="#play">Start a match <span class="arrow-circle" aria-hidden="true">↗</span></a>
+      <a class="cta ghost js-play" href="#play">Play now</a>
+      <a class="cta solid js-play" href="#play" data-fresh="1">Start a match <span class="arrow-circle" aria-hidden="true">↗</span></a>
+    </div>
+    <div class="match-setup" id="match-setup">
+      <div class="setup-block">
+        <span class="setup-label">Mode</span>
+        <div class="pills" id="mode-pills">
+          <button type="button" data-mode="computer" class="on">Vs computer</button>
+          <button type="button" data-mode="pass">Pass and play</button>
+        </div>
+      </div>
+      <div class="setup-block" id="diff-block">
+        <span class="setup-label">Difficulty</span>
+        <div class="pills" id="diff-pills">
+          <button type="button" data-diff="easy">Easy</button>
+          <button type="button" data-diff="medium" class="on">Medium</button>
+          <button type="button" data-diff="hard">Hard</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -69,6 +86,14 @@
             <strong id="turn-label">White to move</strong>
           </div>
           <div id="status"></div>
+          <div class="diff-wrap" id="diff-wrap">
+            <div class="cap-label">Difficulty</div>
+            <div class="pills compact" id="hud-diff">
+              <button type="button" data-diff="easy">Easy</button>
+              <button type="button" data-diff="medium" class="on">Medium</button>
+              <button type="button" data-diff="hard">Hard</button>
+            </div>
+          </div>
           <div class="cap-label">Captured by white</div>
           <div id="cap-b" class="caps b"></div>
           <div class="cap-label">Captured by black</div>
@@ -143,7 +168,7 @@
   <section class="cta-band">
     <h2>Start <em>creating.</em></h2>
     <p>Grab the same workflow and spin up whatever you imagine.</p>
-    <a class="cta solid" href="#play">Get started <span class="arrow-circle" aria-hidden="true">↗</span></a>
+    <a class="cta solid js-play" href="#play" data-fresh="1">Get started <span class="arrow-circle" aria-hidden="true">↗</span></a>
   </section>
 
   <footer class="site-foot">

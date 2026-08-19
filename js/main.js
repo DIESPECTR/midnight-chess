@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Chess } from './chess.js';
 import { createBoard, createPiece, squareToWorld, worldToSquare } from './pieces.js';
 import { bindUnlock, play, ready, loaded } from './audio.js';
-import { pickMove } from './ai.js';
+import { pickMove, LEVELS, thinkDelay } from './ai.js';
 
 const GLYPH = {
   w: { p: '♙', n: '♘', b: '♗', r: '♖', q: '♕', k: '♔' },
@@ -159,6 +159,7 @@ let busy = false;
 let pending = null;
 let hover = -1;
 let vsComputer = true;
+let difficulty = 'medium';
 const anims = [];
 
 function spawnPieces() {
@@ -288,18 +289,22 @@ function setHud() {
   status.classList.toggle('danger', st !== 'playing');
   status.textContent = st === 'playing' ? '' : st;
   const human = !vsComputer || game.turn === 'w';
+  const level = LEVELS[difficulty] || LEVELS.medium;
   document.getElementById('hint').textContent = !human
-    ? 'Computer is thinking'
+    ? `Computer is thinking · ${level.label}`
     : white ? 'Select a white piece' : 'Select a black piece';
   renderCaps();
   renderMoves();
   drawMarkers();
+  syncSettingsUi();
 
-  if (st === 'checkmate' || st === 'stalemate') {
-    document.getElementById('end-title').textContent = st === 'checkmate' ? 'Checkmate' : 'Stalemate';
+  if (st === 'checkmate' || st === 'stalemate' || st === 'draw') {
+    document.getElementById('end-title').textContent = st === 'checkmate' ? 'Checkmate' : 'Draw';
     document.getElementById('end-copy').textContent = st === 'checkmate'
       ? `${white ? 'Black' : 'White'} wins`
-      : 'Draw — no legal moves';
+      : st === 'stalemate'
+        ? 'Draw — no legal moves'
+        : `Draw — ${game.drawReason() || 'no decisive result'}`;
     document.getElementById('end').classList.add('show');
   } else {
     document.getElementById('end').classList.remove('show');
@@ -366,7 +371,7 @@ async function applyMove(from, to, promo = null) {
   }
 
   if (res.status === 'checkmate') play('checkmate');
-  else if (res.status === 'stalemate') play('stalemate');
+  else if (res.status === 'stalemate' || res.status === 'draw') play('stalemate');
   else if (res.status === 'check') play('check');
 
   busy = false;
@@ -384,23 +389,59 @@ function queueComputer() {
   busy = true;
   setHud();
   window.setTimeout(async () => {
-    const move = pickMove(game, 2);
+    const move = pickMove(game, difficulty);
     busy = false;
     if (!move) {
       setHud();
       return;
     }
     await applyMove(move.from, move.to, move.promo);
-  }, 280);
+  }, thinkDelay(difficulty));
 }
 
 function setMode(on) {
   vsComputer = on;
-  const btn = document.getElementById('btn-mode');
-  if (btn) btn.textContent = vsComputer ? 'Vs computer' : 'Pass and play';
   clearSelect();
   setHud();
   queueComputer();
+}
+
+function setDifficulty(level) {
+  if (!LEVELS[level]) return;
+  difficulty = level;
+  setHud();
+}
+
+function markPills(root, attr, value) {
+  if (!root) return;
+  for (const btn of root.querySelectorAll(`[${attr}]`)) {
+    btn.classList.toggle('on', btn.getAttribute(attr) === value);
+  }
+}
+
+function syncSettingsUi() {
+  const modeBtn = document.getElementById('btn-mode');
+  if (modeBtn) {
+    modeBtn.innerHTML = vsComputer
+      ? 'Vs computer <span class="arrow-circle" aria-hidden="true">↗</span>'
+      : 'Pass and play <span class="arrow-circle" aria-hidden="true">↗</span>';
+  }
+  markPills(document.getElementById('mode-pills'), 'data-mode', vsComputer ? 'computer' : 'pass');
+  markPills(document.getElementById('diff-pills'), 'data-diff', difficulty);
+  markPills(document.getElementById('hud-diff'), 'data-diff', difficulty);
+  document.getElementById('diff-block')?.classList.toggle('is-off', !vsComputer);
+  document.getElementById('diff-wrap')?.classList.toggle('is-off', !vsComputer);
+}
+
+function startMatch(fresh = false) {
+  if (fresh) newGame();
+  else setHud();
+  const stage = document.getElementById('play');
+  if (!stage) return;
+  stage.classList.remove('arrive');
+  void stage.offsetWidth;
+  stage.classList.add('arrive');
+  stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function newGame() {
@@ -408,6 +449,7 @@ function newGame() {
   selected = -1;
   legal = [];
   pending = null;
+  busy = false;
   document.getElementById('promo').classList.remove('show');
   spawnPieces();
   setHud();
@@ -546,6 +588,31 @@ if (modeBtn) {
     setMode(!vsComputer);
   };
 }
+document.getElementById('mode-pills')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-mode]');
+  if (!btn) return;
+  play('click');
+  setMode(btn.dataset.mode === 'computer');
+});
+document.getElementById('diff-pills')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-diff]');
+  if (!btn) return;
+  play('click');
+  setDifficulty(btn.dataset.diff);
+});
+document.getElementById('hud-diff')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-diff]');
+  if (!btn) return;
+  play('click');
+  setDifficulty(btn.dataset.diff);
+});
+document.querySelectorAll('.js-play').forEach((el) => {
+  el.addEventListener('click', (e) => {
+    e.preventDefault();
+    play('click');
+    startMatch(el.dataset.fresh === '1');
+  });
+});
 document.getElementById('promo').addEventListener('click', async (e) => {
   const btn = e.target.closest('[data-promo]');
   if (!btn || !pending) return;
@@ -603,6 +670,8 @@ window.__chessDebug = {
       status: game.status(),
       history: game.history.map((m) => m.san),
       legal: legal.map((m) => m.to),
+      vsComputer,
+      difficulty,
     };
   },
   play,
@@ -621,6 +690,18 @@ window.__chessDebug = {
   },
   reset() {
     newGame();
+    return this.state();
+  },
+  setDifficulty(level) {
+    setDifficulty(level);
+    return this.state();
+  },
+  setMode(on) {
+    setMode(!!on);
+    return this.state();
+  },
+  startMatch(fresh = false) {
+    startMatch(!!fresh);
     return this.state();
   },
   async assemble() {

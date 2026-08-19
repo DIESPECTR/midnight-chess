@@ -53,6 +53,51 @@ export class Chess {
     this.halfmove = 0;
     this.fullmove = 1;
     this.history = [];
+    this.positions = [];
+    this.positions.push(this.key());
+  }
+
+  key() {
+    let s = this.turn;
+    s += this.castle.wK ? 'K' : '';
+    s += this.castle.wQ ? 'Q' : '';
+    s += this.castle.bK ? 'k' : '';
+    s += this.castle.bQ ? 'q' : '';
+    s += this.ep == null ? '-' : String(this.ep);
+    for (let i = 0; i < 64; i++) {
+      const p = this.board[i];
+      s += p ? p.c + p.t : '.';
+    }
+    return s;
+  }
+
+  repetitions() {
+    const now = this.positions.at(-1) ?? this.key();
+    let n = 0;
+    for (const k of this.positions) if (k === now) n += 1;
+    return n;
+  }
+
+  insufficientMaterial() {
+    const extras = [];
+    for (let i = 0; i < 64; i++) {
+      const p = this.board[i];
+      if (p && p.t !== 'k') extras.push({ t: p.t, sq: i });
+    }
+    if (!extras.length) return true;
+    if (extras.length === 1 && (extras[0].t === 'n' || extras[0].t === 'b')) return true;
+    if (extras.length === 2 && extras[0].t === 'b' && extras[1].t === 'b') {
+      const color = (s) => ((s & 7) + (s >> 3)) & 1;
+      return color(extras[0].sq) === color(extras[1].sq);
+    }
+    return false;
+  }
+
+  drawReason() {
+    if (this.halfmove >= 100) return '50-move rule';
+    if (this.insufficientMaterial()) return 'insufficient material';
+    if (this.repetitions() >= 3) return 'threefold repetition';
+    return '';
   }
 
   pieceAt(s) {
@@ -393,6 +438,7 @@ export class Chess {
     if (!m) return { ok: false };
     const san = this.#san(m, legal);
     this.#make(m);
+    this.positions.push(this.key());
     const st = this.status();
     m.san = san + (st === 'checkmate' ? '#' : st === 'check' ? '+' : '');
     this.history.push(m);
@@ -403,6 +449,7 @@ export class Chess {
     const m = this.history.pop();
     if (!m) return null;
     this.#unmake(m);
+    this.positions.pop();
     return m;
   }
 
@@ -410,8 +457,19 @@ export class Chess {
     const legal = this.allLegal();
     const check = this.inCheck();
     if (!legal.length) return check ? 'checkmate' : 'stalemate';
+    if (this.halfmove >= 100) return 'draw';
+    if (this.insufficientMaterial()) return 'draw';
+    if (this.repetitions() >= 3) return 'draw';
     if (check) return 'check';
     return 'playing';
+  }
+
+  probe(m) {
+    this.#make(m);
+  }
+
+  revert(m) {
+    this.#unmake(m);
   }
 
   captured() {
